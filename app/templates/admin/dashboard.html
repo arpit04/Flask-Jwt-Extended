@@ -1,0 +1,12 @@
+{% extends "admin/templates/admin_temp.html" %}
+{% block title %}Home{% endblock %}
+{% block main %}
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <h1>You are admin !!!</h1>
+            <img src="{{ url_for('static',filename='img/machine-banner.png') }}" alt="">
+        </div>
+    </div>
+</div>
+{% endblock %}
