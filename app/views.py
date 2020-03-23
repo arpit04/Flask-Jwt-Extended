@@ -14,29 +14,12 @@ from flask_jwt_extended import (
     get_jwt_identity, create_refresh_token, set_refresh_cookies, unset_jwt_cookies
 )
 
-# app = Flask(__name__)
-#app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/ARPIT/projects/another/database.db'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/ARPIT/projects/velway_project/database.db'
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///'+os.path.join(basedir, 'database.db')
 db = SQLAlchemy(app)
 app.config['SECRET_KEY'] = 'secret'
 jwt = JWTManager(app)
 app.config['JWT_TOKEN_LOCATION']= 'cookies'
-
-# def token_required(f):
-#     @wraps(f)
-#     def decorated(*args, **kwargs):
-#         token = None
-#         if 'x-access-token' in request.headers:
-#             token = request.headers['x-access-token']
-#         if not token:
-#             return jsonify({"message":"token is missing"}), 401
-#         try:
-#             data = jwt.decode(token, app.config["SECRET_KEY"])
-#             current_user = Customer.query.filter_by(username=data['username']).first()
-#         except:
-#             return jsonify({"message":"token is invalid"}), 401
-#         return f(current_user, *args, **kwargs)
-#     return decorated
 
 @app.template_filter("clean_date")
 def clean_date(date):
@@ -44,8 +27,6 @@ def clean_date(date):
 
 @app.route("/")
 def index():
-    # a = Customer.query.filter_by(username="arpit").first()
-    # return "Hello "+ a.username
     return render_template("public/index.html")
 
 @app.route("/register", methods=["GET","POST"])
@@ -56,19 +37,15 @@ def register():
         if(int(len(number)) == 10):
             rand = random.randint(1000,9999)
             response = {"message":"Your OTP","otp":rand,"status":1}
-            print(type(rand))
-
             return response
         else:
             error= {"message":"Invalid Number","status":0}
             return error
-        # return render_template("public/register.html", rand=rand,number=number)
     return render_template("public/register.html")
 
 @app.route("/sign_up", methods=["GET","POST"])
 def sign_up():
     if request.method == "POST":
-        # req = request.values
         req = request.form
         username = req["username"]
         email = req["email"]
@@ -94,51 +71,37 @@ def login():
         password = req["password"]
         users = Customer.query.filter_by(contact=req["contact"]).all()
         for user in users:
-            print(user.contact)
+            pass # user.contact
         
         if not users:
-            # return make_response('could not verify',401,{'www-authenticate':'basic realm="Login required"'})
             return jsonify({"message":"Contact number not found"})
         if check_password_hash(user.password,password):
-            #token = jwt.encode({'username':user.username,'exp':datetime.datetime.utcnow() + datetime.timedelta(minutes=60)}, app.config['SECRET_KEY'])
             access_token = create_access_token(identity=user.username)
             refresh_token = create_refresh_token(identity=user.username)
-            # return jsonify(access_token=access_token), 200
-            resp = redirect(url_for('getdata'))
+            resp = redirect(url_for('git'))
 
             set_access_cookies(resp, access_token)   #access cookie and verify jwt token
             set_refresh_cookies(resp, refresh_token)
             return resp
         return render_template("public/login.html")
     return render_template("public/login.html")
-            # return jsonify(username=user.username,email=user.email,contact=user.contact,address=user.address,latitude=user.latitude,longitude=user.longitude,token=access_token,message="login success",status=1) #for postman use
-        # return jsonify(message="wrong password") # for postman use
-
-    # if request.method == "POST":
-        # req = request.values
-        # # req = request.form
-        # contact = req["contact"]
-        # password = req["password"]
 
 @app.route("/getdata")
 @jwt_required
 def getdata():
     user = get_jwt_identity()
-    print(user)
     users = Customer.query.filter_by(username=user).all()
-    # users = Customer.query.all()
     for user in users: #for postman use
         return jsonify(username=user.username,contact=user.contact,email=user.email,address=user.address,latitude=user.latitude,longitude=user.longitude)
-    # return jsonify(user)
+
 @app.route('/protected', methods=['GET'])
 @jwt_required
 def protected():
     current_user = get_jwt_identity()
-    print("hello")
     return jsonify(logged_in_as=current_user), 200
 
 @app.route('/git')
 @jwt_required
 def git():
     current_user = get_jwt_identity()
-    return render_template("public/git.html")
+    return render_template("public/git.html",current_user=current_user)

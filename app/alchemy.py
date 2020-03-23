@@ -1,8 +1,10 @@
 from flask import Flask 
 from flask_sqlalchemy import SQLAlchemy
-app = Flask(__name__)
+import os
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////Users/ARPIT/projects/velway_project/database.db'
+app = Flask(__name__)
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///'+os.path.join(basedir, 'database.db')
 db = SQLAlchemy(app)
 
 class Customer(db.Model):
